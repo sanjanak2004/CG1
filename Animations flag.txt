@@ -1,0 +1,68 @@
+#include <iostream>
+#include <cmath>
+#include <GL/glut.h> 
+
+using namespace std;
+
+int flagWidth = 80;
+int flagHeight = 300;
+int flagPosX = 100; // Initial x-position of the flag
+int flagPosY = 100; // Initial y-position of the flag
+float angle = 0.0f; // Initial angle for flag waving
+bool wavingRight = true; // Flag waving direction
+
+void init() {
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glMatrixMode(GL_PROJECTION);
+    gluOrtho2D(0, 800, 0, 600);
+}
+
+void drawFlag() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor3f(0.0, 0.5, 0.0); // Green color for the flag
+    glPushMatrix();
+    glTranslatef(flagPosX, flagPosY, 0.0); // Translate to flag's position
+    glRotatef(angle, 0.0f, 0.0f, 1.0f); // Rotate the flag around z-axis
+    glBegin(GL_POLYGON);
+    glVertex2f(0.0, 0.0);
+    glVertex2f(flagWidth, 0.0);
+    glVertex2f(flagWidth, flagHeight);
+    glVertex2f(0.0, flagHeight);
+    glEnd();
+    glPopMatrix();
+    glutSwapBuffers();
+}
+
+void timer(int) {
+    glutPostRedisplay();
+    glutTimerFunc(1000 / 60, timer, 0); // Update at 60 FPS
+
+    if (wavingRight) {
+        angle += 1.0f; // Increase angle for waving right
+        if (angle >= 30.0f) {
+            wavingRight = false; // Reverse direction
+        }
+    } else {
+        angle -= 1.0f; // Decrease angle for waving left
+        if (angle <= -30.0f) {
+            wavingRight = true; // Reverse direction
+        }
+    }
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
+    glutInitWindowSize(800, 600);
+    glutInitWindowPosition(100, 100);
+    glutCreateWindow("Flag Animation");
+    init();
+    glutDisplayFunc(drawFlag);
+    glutTimerFunc(0, timer, 0); // Start timer immediately
+    glutMainLoop();
+    return 0;
+}
+
+//g++ flag_animation.cpp -o flag_animation -lglut -lGL -lGLEW -lGLU
+//./flag_animation
+

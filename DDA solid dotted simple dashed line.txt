@@ -1,0 +1,187 @@
+#include <iostream>
+#include <GL/glut.h>
+#include <cmath>
+using namespace std;
+
+int pattern; // 1 = Simple Line, 2 = Dotted Line, 3 = Dashed Line, 4 = Solid Line
+int x_start, y_start;
+
+void Init() {
+    glClearColor(0, 0, 0, 0);
+    glColor3f(1, 1, 1, 1);
+    gluOrtho2D(-320, 320, -240, 240); // Set the coordinate system with the origin at the center
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void setPixel(int x, int y) {
+    glBegin(GL_POINTS);
+    glVertex2i(x, y);
+    glEnd();
+}
+
+void drawSimpleLine(int x1, int y1, int x2, int y2) {
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+    float xIncrement = float(dx) / steps;
+    float yIncrement = float(dy) / steps;
+
+    float x = x1;
+    float y = y1;
+    for (int i = 0; i <= steps; ++i) {
+        setPixel(round(x), round(y));
+        x += xIncrement;
+        y += yIncrement;
+    }
+}
+
+void drawDottedLine(int x1, int y1, int x2, int y2) {
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+    float xIncrement = float(dx) / steps;
+    float yIncrement = float(dy) / steps;
+
+    float x = x1;
+    float y = y1;
+    bool draw = true;
+    for (int i = 0; i <= steps; ++i) {
+        if (draw) {
+            setPixel(round(x), round(y));
+        }
+        draw = !draw;
+        x += xIncrement;
+        y += yIncrement;
+    }
+}
+
+void drawDashedLine(int x1, int y1, int x2, int y2) {
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+    float xIncrement = float(dx) / steps;
+    float yIncrement = float(dy) / steps;
+
+    float x = x1;
+    float y = y1;
+    bool draw = true;
+    for (int i = 0; i <= steps; ++i) {
+        if (draw) {
+            setPixel(round(x), round(y));
+        }
+        if (i % 10 == 0) { // Adjust the dash length here
+            draw = !draw;
+        }
+        x += xIncrement;
+        y += yIncrement;
+    }
+}
+
+void drawSolidLine(int x1, int y1, int x2, int y2) {
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int steps = abs(dx) > abs(dy) ? abs(dx) : abs(dy);
+
+    float xIncrement = float(dx) / steps;
+    float yIncrement = float(dy) / steps;
+
+    float x = x1;
+    float y = y1;
+    for (int i = 0; i <= steps; ++i) {
+        setPixel(round(x), round(y));
+        x += xIncrement;
+        y += yIncrement;
+    }
+}
+
+void drawLine(int x1, int y1, int x2, int y2) {
+    switch (pattern) {
+        case 1:
+            drawSimpleLine(x1, y1, x2, y2);
+            break;
+        case 2:
+            drawDottedLine(x1, y1, x2, y2);
+            break;
+        case 3:
+            drawDashedLine(x1, y1, x2, y2);
+            break;
+        case 4:
+            drawSolidLine(x1, y1, x2, y2);
+            break;
+        default:
+            break;
+    }
+}
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Draw axes
+    glColor3f(1, 0, 0); // Red color
+    glBegin(GL_LINES);
+    glVertex2i(-320, 0);
+    glVertex2i(320, 0);
+    glVertex2i(0, -240);
+    glVertex2i(0, 240);
+    glEnd();
+
+    glFlush();
+}
+
+void mymouse(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        x_start = x - 320; // Adjust x-coordinate to screen coordinates
+        y_start = 240 - y; // Invert y-coordinate to screen coordinates
+    } else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+        int x_end = x - 320; // Adjust x-coordinate to screen coordinates
+        int y_end = 240 - y; // Invert y-coordinate to screen coordinates
+        drawLine(x_start, y_start, x_end, y_end);
+        glFlush();
+    }
+}
+
+void keyboard(unsigned char key, int x, int y) {
+    switch (key) {
+        case '1':
+            pattern = 1; // Simple Line
+            cout << "Current Line Pattern: Simple Line" << endl;
+            break;
+        case '2':
+            pattern = 2; // Dotted Line
+            cout << "Current Line Pattern: Dotted Line" << endl;
+            break;
+        case '3':
+            pattern = 3; // Dashed Line
+            cout << "Current Line Pattern: Dashed Line" << endl;
+            break;
+        case '4':
+            pattern = 4; // Solid Line
+            cout << "Current Line Pattern: Solid Line" << endl;
+            break;
+        default:
+            break;
+    }
+}
+
+int main(int argc, char **argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(640, 480);
+    glutCreateWindow("Line Drawing");
+    Init();
+    glutDisplayFunc(display);
+    glutMouseFunc(mymouse);
+    glutKeyboardFunc(keyboard);
+    glutMainLoop();
+
+    return 0;
+}
+
+//Launch the program (./line_drawing).
+//Click and hold the left mouse button to set the starting point of the line.
+//Drag the mouse to define the ending point of the line.
+//Release the left mouse button to draw the line using the default simple line pattern.
+//Press keys 2, 3, or 4 on the keyboard to change the line pattern and observe the changes in the drawn lines based on the selected pattern

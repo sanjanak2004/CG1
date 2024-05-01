@@ -1,0 +1,116 @@
+#include <iostream>
+#include <vector>
+#include <GL/glut.h>
+
+using namespace std;
+
+struct Point {
+    int x, y;
+    Point(int _x, int _y) : x(_x), y(_y) {}
+};
+
+vector<Point> vertices;
+
+void init() {
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    glMatrixMode(GL_PROJECTION);
+    gluOrtho2D(0, 640, 0, 480);
+}
+
+// Draw a line between two points
+void drawLine(Point p1, Point p2) {
+    glBegin(GL_LINES);
+    glVertex2i(p1.x, p1.y);
+    glVertex2i(p2.x, p2.y);
+    glEnd();
+}
+
+// Draw the polygon from the vertices
+void drawPolygon() {
+    glColor3f(0.0, 0.0, 0.0);
+    glBegin(GL_LINE_LOOP);
+    for (const auto& vertex : vertices) {
+        glVertex2i(vertex.x, vertex.y);
+    }
+    glEnd();
+}
+
+// Scan line algorithm for filling a polygon with a pattern
+void scanLineFillWithPattern() {
+    int minY = INT_MAX, maxY = INT_MIN;
+
+    // Find the minimum and maximum Y coordinates
+    for (const auto& vertex : vertices) {
+        if (vertex.y < minY) minY = vertex.y;
+        if (vertex.y > maxY) maxY = vertex.y;
+    }
+
+    // Process each scan line from minY to maxY
+    for (int y = minY; y <= maxY; ++y) {
+        vector<int> intersections;
+
+        // Find intersections of current scan line with polygon edges
+        for (size_t i = 0; i < vertices.size(); ++i) {
+            const Point& p1 = vertices[i];
+            const Point& p2 = vertices[(i + 1) % vertices.size()];
+
+            if ((p1.y <= y && p2.y > y) || (p2.y <= y && p1.y > y)) {
+                // Calculate x-coordinate of intersection
+                int xIntersect = p1.x + (double)(y - p1.y) / (p2.y - p1.y) * (p2.x - p1.x);
+                intersections.push_back(xIntersect);
+            }
+        }
+
+        // Sort intersections to fill the scan line
+        sort(intersections.begin(), intersections.end());
+
+        // Draw horizontal line segments between pairs of intersections
+        for (size_t i = 0; i < intersections.size(); i += 2) {
+            int x1 = intersections[i];
+            int x2 = intersections[i + 1];
+
+            // Draw line segment with pattern
+            for (int x = x1; x <= x2; ++x) {
+                if ((x / 20) % 2 == 0) { // Define pattern width (e.g., 20 pixels)
+                    glBegin(GL_POINTS);
+                    glVertex2i(x, y);
+                    glEnd();
+                }
+            }
+        }
+    }
+}
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Draw the polygon outline
+    drawPolygon();
+
+    // Fill the polygon using scan line algorithm with pattern
+    glColor3f(0.0, 0.0, 1.0); // Set fill color
+    scanLineFillWithPattern();
+
+    glFlush();
+}
+
+void mouse(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        y = 480 - y; // Flip y-coordinate
+        vertices.emplace_back(x, y);
+        glutPostRedisplay();
+    }
+}
+
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(640, 480);
+    glutInitWindowPosition(200, 200);
+    glutCreateWindow("Scan Line Polygon Fill with Pattern");
+    init();
+    glutDisplayFunc(display);
+    glutMouseFunc(mouse);
+    glutMainLoop();
+    return 0;
+}

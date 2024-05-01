@@ -1,0 +1,99 @@
+#include <iostream>
+#include <GL/glut.h>
+#include <cmath>
+
+// Window dimensions
+const int WIDTH = 800;
+const int HEIGHT = 800;
+
+// Recursive function to draw a Koch curve
+void drawKochCurve(float x1, float y1, float x2, float y2, int iterations) {
+    if (iterations == 0) {
+        // Base case: draw a straight line segment
+        glBegin(GL_LINES);
+        glVertex2f(x1, y1);
+        glVertex2f(x2, y2);
+        glEnd();
+    } else {
+        // Calculate 1/3 and 2/3 points of the line
+        float deltaX = (x2 - x1) / 3.0f;
+        float deltaY = (y2 - y1) / 3.0f;
+        float x1p = x1 + deltaX;
+        float y1p = y1 + deltaY;
+        float x2p = x2 - deltaX;
+        float y2p = y2 - deltaY;
+
+        // Calculate the third point (vertex of the "bump")
+        float angle = M_PI / 3.0f; // 60 degrees in radians
+        float x3 = x1p + deltaX * cos(angle) - deltaY * sin(angle);
+        float y3 = y1p + deltaX * sin(angle) + deltaY * cos(angle);
+
+        // Recursive calls for the four line segments
+        drawKochCurve(x1, y1, x1p, y1p, iterations - 1);
+        drawKochCurve(x1p, y1p, x3, y3, iterations - 1);
+        drawKochCurve(x3, y3, x2p, y2p, iterations - 1);
+        drawKochCurve(x2p, y2p, x2, y2, iterations - 1);
+    }
+}
+
+// Function to draw a Koch snowflake (equilateral triangle)
+void drawKochSnowflake(float x1, float y1, float x2, float y2, int iterations) {
+    // Calculate equilateral triangle vertices
+    float centerX = (x1 + x2) / 2.0f;
+    float height = (y2 - y1) * sqrt(3) / 2.0f;
+    float x3 = centerX - height / sqrt(3);
+    float y3 = y1;
+
+    // Draw the three Koch curves to form a triangle
+    drawKochCurve(x1, y1, x2, y2, iterations);
+    drawKochCurve(x2, y2, x3, y3, iterations);
+    drawKochCurve(x3, y3, x1, y1, iterations);
+}
+
+// Function to display the Koch snowflake
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Set line color to blue
+    glColor3f(0.0f, 0.0f, 1.0f);
+
+    // Define the equilateral triangle (base points)
+    float x1 = WIDTH / 2.0f - 200.0f;
+    float y1 = HEIGHT / 2.0f - 200.0f;
+    float x2 = WIDTH / 2.0f + 200.0f;
+    float y2 = HEIGHT / 2.0f - 200.0f;
+
+    // Set the number of iterations (depth of recursion)
+    int iterations = 4;
+
+    // Draw the Koch snowflake
+    drawKochSnowflake(x1, y1, x2, y2, iterations);
+
+    glFlush(); // Ensure all OpenGL commands are executed
+}
+
+// Function to initialize OpenGL settings
+void init() {
+    glClearColor(1.0f, 1.0f, 1.0f, 1.0f); // Set clear color to white
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluOrtho2D(0.0, WIDTH, 0.0, HEIGHT); // Set the coordinate system
+}
+
+// Main function
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(WIDTH, HEIGHT);
+    glutCreateWindow("Koch Snowflake Fractal");
+
+    init(); // Initialize OpenGL settings
+    glutDisplayFunc(display); // Set the display callback function
+
+    glutMainLoop(); // Enter the event-processing loop
+
+    return 0;
+}
+
+//g++ koch_snowflake.cpp -o koch_snowflake -lglut -lGL -lGLEW -lGLU
+//./koch_snowflake

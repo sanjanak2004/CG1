@@ -1,0 +1,79 @@
+#include <iostream>
+#include <GL/glut.h>
+#include <cmath>
+using namespace std;
+
+float angle = 0.0f;  // Rotation angle of the windmill blades
+
+// Function to initialize OpenGL
+void init() {
+    glClearColor(1.0, 1.0, 1.0, 0.0);  // Set clear color to white
+    glMatrixMode(GL_PROJECTION);       // Set projection matrix mode
+    gluOrtho2D(-400, 400, -400, 400);   // Set orthographic viewing volume
+}
+
+// Function to draw a single windmill blade
+void drawBlade() {
+    glColor3f(0.0f, 0.0f, 0.0f);  // Set color to black
+    glBegin(GL_TRIANGLES);
+    glVertex2f(0.0f, 0.0f);
+    glVertex2f(50.0f, 10.0f);
+    glVertex2f(50.0f, -10.0f);
+    glEnd();
+}
+
+// Function to draw the windmill
+void drawWindmill() {
+    glPushMatrix();  // Save the current matrix
+    glRotatef(angle, 0.0f, 0.0f, 1.0f);  // Rotate the blades around z-axis
+
+    // Draw four blades of the windmill
+    for (int i = 0; i < 4; ++i) {
+        glRotatef(90.0f, 0.0f, 0.0f, 1.0f);  // Rotate for each blade
+        drawBlade();  // Draw a single blade
+    }
+
+    glPopMatrix();  // Restore the previous matrix
+}
+
+// Function to display the scene
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);  // Clear the color buffer
+
+    glLoadIdentity();  // Load the identity matrix
+    glTranslatef(0.0f, 0.0f, 0.0f);  // Translate to origin (0,0)
+
+    drawWindmill();  // Draw the windmill with rotating blades
+
+    glutSwapBuffers();  // Swap buffers to display the rendered image
+}
+
+// Function to update the animation
+void update(int value) {
+    angle += 2.0f;  // Update the rotation angle (2 degrees per frame)
+    if (angle > 360.0f) {
+        angle -= 360.0f;  // Wrap around the angle if it exceeds 360 degrees
+    }
+
+    glutPostRedisplay();  // Notify GLUT that the display has changed
+
+    // Set up the next update
+    glutTimerFunc(16, update, 0);  // 60 FPS (1000 ms / 60 = 16.67 ms per frame)
+}
+
+// Main function
+int main(int argc, char** argv) {
+    glutInit(&argc, argv);                         // Initialize GLUT
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);    // Set display mode
+    glutInitWindowSize(800, 800);                   // Set window size
+    glutCreateWindow("Windmill Animation");         // Create window
+    init();                                         // Initialize OpenGL
+    glutDisplayFunc(display);                       // Register display callback
+    glutTimerFunc(0, update, 0);                    // Register update callback
+    glutMainLoop();                                 // Enter main event loop
+    return 0;
+}
+
+
+//g++ Filename.cpp -o Filename -lglut -lGL -lGLEW -lGLU
+//./Filename

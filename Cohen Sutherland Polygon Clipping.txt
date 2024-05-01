@@ -1,0 +1,157 @@
+#include <iostream>
+#include <vector>
+#include <GL/glut.h>
+
+using namespace std;
+
+// Clipping boundaries (window)
+int wxmin = 200, wxmax = 500, wymax = 350, wymin = 100;
+
+// Polygon data
+vector<pair<int, int>> points; // Dynamic list of polygon vertices
+
+// Function to classify a point with respect to the clipping boundaries
+int computeCode(int x, int y) {
+    int code = 0;
+    if (x < wxmin)
+        code |= 1; // Left
+    if (x > wxmax)
+        code |= 2; // Right
+    if (y < wymin)
+        code |= 4; // Bottom
+    if (y > wymax)
+        code |= 8; // Top
+    return code;
+}
+
+// Cohen-Sutherland line clipping algorithm for a segment
+bool clipLine(int &x1, int &y1, int &x2, int &y2) {
+    int code1 = computeCode(x1, y1);
+    int code2 = computeCode(x2, y2);
+
+    while (true) {
+        if ((code1 | code2) == 0) {
+            // Both endpoints are inside the window
+            return true;
+        } else if (code1 & code2) {
+            // Both endpoints are outside on the same side
+            return false;
+        } else {
+            // Clipping needed; find intersection point
+            int codeOut = code1 ? code1 : code2;
+
+            int x, y;
+
+            if (codeOut & 8) { // Top
+                x = x1 + (x2 - x1) * (wymax - y1) / (y2 - y1);
+                y = wymax;
+            } else if (codeOut & 4) { // Bottom
+                x = x1 + (x2 - x1) * (wymin - y1) / (y2 - y1);
+                y = wymin;
+            } else if (codeOut & 2) { // Right
+                y = y1 + (y2 - y1) * (wxmax - x1) / (x2 - x1);
+                x = wxmax;
+            } else if (codeOut & 1) { // Left
+                y = y1 + (y2 - y1) * (wxmin - x1) / (x2 - x1);
+                x = wxmin;
+            }
+
+            if (codeOut == code1) {
+                x1 = x;
+                y1 = y;
+                code1 = computeCode(x1, y1);
+            } else {
+                x2 = x;
+                y2 = y;
+                code2 = computeCode(x2, y2);
+            }
+        }
+    }
+}
+
+// Cohen-Sutherland polygon clipping algorithm
+void clipPolygon() {
+    vector<pair<int, int>> clippedPoints;
+
+    int prevX = points.back().first;
+    int prevY = points.back().second;
+
+    for (const auto &p : points) {
+        int currX = p.first;
+        int currY = p.second;
+
+        int x1 = prevX;
+        int y1 = prevY;
+        int x2 = currX;
+        int y2 = currY;
+
+        if (clipLine(x1, y1, x2, y2)) {
+            clippedPoints.emplace_back(x1, y1);
+            clippedPoints.emplace_back(x2, y2);
+        }
+
+        prevX = currX;
+        prevY = currY;
+    }
+
+    points = clippedPoints;
+}
+
+// Display function to draw the clipped polygon
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+    glColor3f(0.2, 0.2, 1);
+
+    glBegin(GL_POLYGON);
+    for (const auto &p : points) {
+        glVertex2i(p.first, p.second);
+    }
+    glEnd();
+
+    glFlush();
+}
+
+// Keyboard callback function to trigger polygon clipping
+void keyboard(unsigned char key, int x, int y) {
+    switch (key) {
+        case 'c':
+        case 'C':
+            clipPolygon();
+            glutPostRedisplay();
+            break;
+    }
+}
+
+int main(int argc, char** argv) {
+    cout << "Enter number of vertices of polygon: ";
+    int numVertices;
+    cin >> numVertices;
+
+    cout << "Enter polygon vertices (x y):" << endl;
+    for (int i = 0; i < numVertices; ++i) {
+        int x, y;
+        cin >> x >> y;
+        points.emplace_back(x, y);
+    }
+
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(640, 480);
+    glutCreateWindow("Cohen-Sutherland Polygon Clipping");
+    glClearColor(1.0, 1.0, 1.0, 0.0);
+    gluOrtho2D(0, 640, 0, 480);
+    glutDisplayFunc(display);
+    glutKeyboardFunc(keyboard);
+    glutMainLoop();
+
+    return 0;
+}
+
+
+//g++ ClipPolygon.cpp -lglut -lGL -lGLEW -lGLU -o ClipPolygon
+//./ClipPolygon
+//Enter polygon vertices (x y):
+//Vertex 1: 250 150
+//Vertex 2: 400 150
+//Vertex 3: 400 300
+//Vertex 4: 250 300

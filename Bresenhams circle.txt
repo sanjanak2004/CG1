@@ -1,0 +1,84 @@
+#include <GL/glut.h>
+#include <iostream>
+#include <cstdlib> // For exit() function
+
+int r, cx, cy; // Radius and center coordinates
+
+void plotPoints(int x, int y) {
+    glBegin(GL_POINTS);
+    glVertex2i(cx + x, cy + y);    // Quadrant 1
+    glVertex2i(cx + y, cy + x);    // Quadrant 2
+    glVertex2i(cx - y, cy + x);    // Quadrant 3
+    glVertex2i(cx - x, cy + y);    // Quadrant 4
+    glVertex2i(cx - x, cy - y);    // Quadrant 5
+    glVertex2i(cx - y, cy - x);    // Quadrant 6
+    glVertex2i(cx + y, cy - x);    // Quadrant 7
+    glVertex2i(cx + x, cy - y);    // Quadrant 8
+    glEnd();
+}
+
+void drawCircle() {
+    int x = 0;
+    int y = r;
+    int d = 3 - 2 * r;
+
+    while (x <= y) {
+        plotPoints(x, y);
+        if (d < 0) {
+            d += 4 * x + 6;
+        } else {
+            d += 4 * (x - y) + 10;
+            y--;
+        }
+        x++;
+    }
+
+    glutSwapBuffers(); // Swap front and back buffers (for double buffering)
+}
+
+void init() {
+    glClearColor(1.0, 1.0, 1.0, 0.0); // Set clear color to white
+    glColor3f(1.0, 0.0, 0.0); // Set drawing color to red
+
+    // Check if center coordinates are within viewport bounds
+    if (cx < 0 || cx > 640 || cy < 0 || cy > 480) {
+        std::cerr << "Error: Center coordinates out of bounds!" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    gluOrtho2D(0, 640, 0, 480); // Set orthographic projection
+}
+
+int main(int argc, char **argv) {
+    std::cout << "Enter Radius: ";
+    std::cin >> r;
+
+    // Input validation for radius
+    while (r <= 0) {
+        std::cout << "Invalid radius! Please enter a positive value: ";
+        std::cin >> r;
+    }
+
+    std::cout << "Enter Center (x y): ";
+    std::cin >> cx >> cy;
+
+    // Initialize GLUT
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB); // Use double buffering and RGB color mode
+    glutInitWindowPosition(100, 100);
+    glutInitWindowSize(640, 480);
+
+    // Create OpenGL window
+    glutCreateWindow("Bresenham Circle");
+
+    // Initialize OpenGL settings
+    init();
+
+    // Set the display callback function
+    glutDisplayFunc(drawCircle);
+
+    // Enter the event processing loop
+    glutMainLoop();
+
+    return 0;
+}

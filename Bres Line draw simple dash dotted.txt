@@ -1,0 +1,152 @@
+#include <iostream>
+#include <GL/glut.h>
+using namespace std;
+
+int pattern; // 1 = Simple Line, 2 = Dotted Line, 3 = Dashed Line
+
+void Init() {
+    glClearColor(0, 0, 0, 0);
+    glColor3f(1, 1, 1);
+    gluOrtho2D(0, 640, 0, 480);
+    glClear(GL_COLOR_BUFFER_BIT);
+}
+
+void drawSimpleLine(int x1, int y1, int x2, int y2) {
+    glBegin(GL_LINES);
+    glVertex2i(x1, y1);
+    glVertex2i(x2, y2);
+    glEnd();
+}
+
+void drawDottedLine(int x1, int y1, int x2, int y2) {
+    int dashLength = 5;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int steps = max(abs(dx), abs(dy));
+
+    float xIncrement = float(dx) / steps;
+    float yIncrement = float(dy) / steps;
+
+    bool draw = true;
+    for (int i = 0; i <= steps; ++i) {
+        if (draw) {
+            glBegin(GL_POINTS);
+            glVertex2i(x1 + i * xIncrement, y1 + i * yIncrement);
+            glEnd();
+        }
+        if (i % dashLength == 0) {
+            draw = !draw;
+        }
+    }
+}
+
+void drawDashedLine(int x1, int y1, int x2, int y2) {
+    int dashLength = 10;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    int steps = max(abs(dx), abs(dy));
+
+    float xIncrement = float(dx) / steps;
+    float yIncrement = float(dy) / steps;
+
+    bool draw = true;
+    for (int i = 0; i <= steps; ++i) {
+        if (draw) {
+            glBegin(GL_POINTS);
+            glVertex2i(x1 + i * xIncrement, y1 + i * yIncrement);
+            glEnd();
+        }
+        if (i % dashLength == 0) {
+            draw = !draw;
+        }
+    }
+}
+
+void drawLine(int x1, int y1, int x2, int y2) {
+    switch (pattern) {
+        case 1:
+            drawSimpleLine(x1, y1, x2, y2);
+            break;
+        case 2:
+            drawDottedLine(x1, y1, x2, y2);
+            break;
+        case 3:
+            drawDashedLine(x1, y1, x2, y2);
+            break;
+        default:
+            break;
+    }
+}
+
+void display() {
+    glClear(GL_COLOR_BUFFER_BIT);
+
+    // Draw lines in all four quadrants with different slopes
+    drawLine(50, 50, 200, 200);   // Quadrant 1
+    drawLine(50, 50, 200, 100);   // Quadrant 1
+    drawLine(50, 50, 100, 200);   // Quadrant 1
+    drawLine(50, 50, 100, 100);   // Quadrant 1
+
+    drawLine(50, 430, 200, 280);  // Quadrant 2
+    drawLine(50, 430, 200, 380);  // Quadrant 2
+    drawLine(50, 430, 100, 280);  // Quadrant 2
+    drawLine(50, 430, 100, 380);  // Quadrant 2
+
+    drawLine(590, 50, 400, 200);  // Quadrant 4
+    drawLine(590, 50, 400, 100);  // Quadrant 4
+    drawLine(590, 50, 540, 200);  // Quadrant 4
+    drawLine(590, 50, 540, 100);  // Quadrant 4
+
+    drawLine(590, 430, 400, 280); // Quadrant 3
+    drawLine(590, 430, 400, 380); // Quadrant 3
+    drawLine(590, 430, 540, 280); // Quadrant 3
+    drawLine(590, 430, 540, 380); // Quadrant 3
+
+    glFlush();
+}
+
+void mymouse(int button, int state, int x, int y) {
+    if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+        static int x_start, y_start;
+        x_start = x;
+        y_start = 480 - y; // Invert y-coordinate
+    } else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
+        int x_end = x;
+        int y_end = 480 - y; // Invert y-coordinate
+        drawLine(x_start, y_start, x_end, y_end);
+        glFlush();
+    }
+}
+
+void keyboard(unsigned char key, int x, int y) {
+    switch (key) {
+        case '1':
+            pattern = 1; // Simple Line
+            cout << "Current Line Pattern: Simple Line" << endl;
+            break;
+        case '2':
+            pattern = 2; // Dotted Line
+            cout << "Current Line Pattern: Dotted Line" << endl;
+            break;
+        case '3':
+            pattern = 3; // Dashed Line
+            cout << "Current Line Pattern: Dashed Line" << endl;
+            break;
+        default:
+            break;
+    }
+}
+
+int main(int argc, char **argv) {
+    glutInit(&argc, argv);
+    glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB);
+    glutInitWindowSize(640, 480);
+    glutCreateWindow("Line Drawing");
+    Init();
+    glutDisplayFunc(display);
+    glutMouseFunc(mymouse);
+    glutKeyboardFunc(keyboard);
+    glutMainLoop();
+
+    return 0;
+}
