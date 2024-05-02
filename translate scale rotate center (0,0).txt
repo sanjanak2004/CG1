@@ -143,3 +143,12 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+//g++ -o polygon_transform polygon_transform.cpp -lglut -lGLU -lGL
+//./polygon_transform
+//Enter number of edges for the polygon: 3
+//Enter vertices (x y) for the polygon: Vertex 1: -50 -50 Vertex 2: 50 -50 Vertex 3: 0 50
+//Enter translation (Tx Ty): 50 50
+//Enter scaling factors (Sx Sy): 1.5 1.5
+//Enter rotation angle (degrees): 45
+
