@@ -135,3 +135,13 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+//g++ -o transformations transformations.cpp -lGL -lGLU -lglut
+//./transformations
+//Enter number of edges for the polygon: 4
+//Enter vertices of the polygon (x, y): Vertex 1: 100 100 Vertex 2: 200 100 Vertex 3: 200 200 Vertex 4: 100 200
+//Enter scaling factors (sx, sy): 1.5 1.5
+//Enter rotation center (cx, cy): 150 150 Enter rotation angle (degrees): 45
+//Enter reflection axis ('x' or 'y'): x
+
+
