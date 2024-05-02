@@ -1,36 +1,51 @@
 #include <iostream>
 #include <GL/glut.h>
+#include <vector>
+#include <stack>
 
 const int WIDTH = 640;
 const int HEIGHT = 480;
-
-float fillR = 1.0f, fillG = 0.0f, fillB = 0.0f; // Default fill color (red)
 
 void setPixel(int x, int y, float r, float g, float b) {
     glColor3f(r, g, b);
     glBegin(GL_POINTS);
     glVertex2i(x, y);
     glEnd();
+    glFlush();
 }
 
 void boundaryFill(int x, int y, float fillColorR, float fillColorG, float fillColorB, float borderColorR, float borderColorG, float borderColorB) {
-    float currentPixel[3];
-    glReadPixels(x, y, 1, 1, GL_RGB, GL_FLOAT, currentPixel);
+    std::stack<std::pair<int, int>> pixels;
+    pixels.push(std::make_pair(x, y));
 
-    if (currentPixel[0] != borderColorR || currentPixel[1] != borderColorG || currentPixel[2] != borderColorB) {
-        setPixel(x, y, fillColorR, fillColorG, fillColorB);
+    while (!pixels.empty()) {
+        std::pair<int, int> current = pixels.top();
+        pixels.pop();
 
-        boundaryFill(x + 1, y, fillColorR, fillColorG, fillColorB, borderColorR, borderColorG, borderColorB);
-        boundaryFill(x - 1, y, fillColorR, fillColorG, fillColorB, borderColorR, borderColorG, borderColorB);
-        boundaryFill(x, y + 1, fillColorR, fillColorG, fillColorB, borderColorR, borderColorG, borderColorB);
-        boundaryFill(x, y - 1, fillColorR, fillColorG, fillColorB, borderColorR, borderColorG, borderColorB);
+        int cx = current.first;
+        int cy = current.second;
+
+        // Read the current pixel color
+        float currentPixel[3];
+        glReadPixels(cx, cy, 1, 1, GL_RGB, GL_FLOAT, currentPixel);
+
+        if (currentPixel[0] != borderColorR || currentPixel[1] != borderColorG || currentPixel[2] != borderColorB) {
+            // Set pixel to fill color
+            setPixel(cx, cy, fillColorR, fillColorG, fillColorB);
+
+            // Push neighboring pixels onto stack for further processing
+            pixels.push(std::make_pair(cx + 1, cy));
+            pixels.push(std::make_pair(cx - 1, cy));
+            pixels.push(std::make_pair(cx, cy + 1));
+            pixels.push(std::make_pair(cx, cy - 1));
+        }
     }
 }
 
 void mouseCallback(int button, int state, int x, int y) {
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-        y = HEIGHT - y;
-        boundaryFill(x, y, fillR, fillG, fillB, 1.0f, 1.0f, 1.0f); // Using white as the border color
+        y = HEIGHT - y; // Invert y-coordinate to match OpenGL's bottom-left origin
+        boundaryFill(x, y, 1.0f, 0.0f, 0.0f, 1.0f, 1.0f, 1.0f); // Fill with red (1.0, 0.0, 0.0), border color white (1.0, 1.0, 1.0)
     }
 }
 
@@ -69,3 +84,8 @@ int main(int argc, char** argv) {
 
     return 0;
 }
+
+//g++ -o boundary_fill boundary_fill.cpp -lGL -lGLU -lglut
+//./boundary_fill
+//Use the left mouse button to click inside the triangle (polygon) displayed.
+//Click anywhere inside the triangle to trigger the boundary fill algorithm.
